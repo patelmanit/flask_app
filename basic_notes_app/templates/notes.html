@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notes</title>
+    <style>
+        .container {
+            width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .note {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            position: relative;
+        }
+        .delete-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            color: red;
+            text-decoration: none;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>My Notes</h2>
+        <a href="/logout" style="float: right;">Logout</a>
+        
+        <form method="POST" action="/add_note">
+            <textarea name="content" placeholder="Write your note here..." required></textarea>
+            <button type="submit">Add Note</button>
+        </form>
+
+        <div class="notes">
+            {% for note in notes %}
+            <div class="note">
+                <a href="/delete_note/{{ note.id }}" class="delete-btn">×</a>
+                <p>{{ note.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
