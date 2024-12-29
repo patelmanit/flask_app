@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Stock Portfolio</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-2xl font-bold text-gray-800">My Portfolio</h1>
+                <a href="/logout" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Add Stock Form -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Add New Stock</h2>
+            <form id="addStockForm" action="/add-stock" method="POST" class="space-y-4">
+                <div class="relative">
+                    <input type="text" id="symbolSearch" placeholder="Search for a stock symbol..." 
+                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div id="searchResults" class="absolute w-full mt-1 bg-white border rounded-lg shadow-lg hidden">
+                    </div>
+                </div>
+                <div class="flex space-x-4">
+                    <input type="hidden" id="symbolInput" name="symbol" required>
+                    <input type="number" name="shares" placeholder="Number of Shares" required
+                        class="px-4 py-2 border rounded-lg w-40">
+                    <input type="number" step="0.01" id="priceInput" name="price" placeholder="Purchase Price" required
+                        class="px-4 py-2 border rounded-lg w-40">
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Add Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Stock Positions Table -->
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Symbol</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Shares</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Purchase Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Value</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody" class="bg-white divide-y divide-gray-200">
+                    {% for stock in stocks %}
+                    <tr class="stock-row">
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-900">{{ stock.symbol }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-900">{{ stock.shares }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-900">${{ "%.2f"|format(stock.price) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-900">${{ "%.2f"|format(stock.shares * stock.price) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <form action="/delete-stock/{{ stock.id }}" method="POST" class="inline">
+                                <button type="submit" class="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        let searchTimeout;
+        const symbolSearch = document.getElementById('symbolSearch');
+        const searchResults = document.getElementById('searchResults');
+        const symbolInput = document.getElementById('symbolInput');
+        const priceInput = document.getElementById('priceInput');
+
+        symbolSearch.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length === 0) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetch(`/search-stock?query=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+                        if (data.length > 0) {
+                            data.forEach(stock => {
+                                const div = document.createElement('div');
+                                div.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+                                div.innerHTML = `
+                                    <div class="font-medium">${stock.symbol}</div>
+                                    <div class="text-sm text-gray-600">${stock.name}</div>
+                                    <div class="text-sm text-gray-600">Current Price: $${stock.currentPrice}</div>
+                                `;
+                                div.onclick = () => {
+                                    symbolSearch.value = stock.symbol;
+                                    symbolInput.value = stock.symbol;
+                                    priceInput.value = stock.currentPrice;
+                                    searchResults.classList.add('hidden');
+                                };
+                                searchResults.appendChild(div);
+                            });
+                            searchResults.classList.remove('hidden');
+                        } else {
+                            searchResults.classList.add('hidden');
+                        }
+                    });
+            }, 300);
+        });
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!symbolSearch.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
