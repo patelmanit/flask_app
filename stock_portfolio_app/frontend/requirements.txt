@@ -1,0 +1,7 @@
+lodash
+cra-template
+web-vitals
+react
+react-dom
+react-router-dom
+react-scripts

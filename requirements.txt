@@ -3,4 +3,3 @@ Flask-SQLAlchemy    # Database ORM
 Flask-Login         # User authentication
 Flask-WTF          # Form handling
 Werkzeug           # Password hashing
-lodash
